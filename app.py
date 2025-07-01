@@ -77,13 +77,8 @@ st.title("英語論文要約アプリ")
 
 # サイドバーでAPIキーとモデルを設定
 st.sidebar.header("設定")
-# Streamlit Community CloudのSecretsからAPIキーを取得
-api_key = st.secrets.get("GEMINI_API_KEY")
 
-# APIキーが設定されていない場合のメッセージ
-if not api_key:
-    st.sidebar.error("アプリをデプロイする管理者に連絡して、Gemini APIキーを設定してもらってください。")
-    st.stop()
+# モデル選択
 model_name = st.sidebar.selectbox(
     "使用するモデルを選択",
     ("gemini-2.5-pro", "gemini-2.5-flash", "gemini-2.0-flash") 
@@ -91,6 +86,28 @@ model_name = st.sidebar.selectbox(
 
 # ファイルアップローダー
 uploaded_file = st.file_uploader("英語の論文(PDF)をアップロードしてください", type="pdf")
+
+# Streamlit Community CloudのSecretsからAPIキーを取得、なければ手動入力
+api_key = ""
+try:
+    # Secretsからキーを取得しようと試みる
+    api_key = st.secrets.get("GEMINI_API_KEY")
+except Exception:
+    # ローカル実行時など、secrets.toml がない場合のエラーを無視
+    pass
+
+# Secretsにキーがない、または取得に失敗した場合、ユーザーに入力を求める
+if not api_key:
+    api_key = st.sidebar.text_input(
+        "Gemini APIキーを入力してください",
+        type="password",
+        help="[Google AI Studio](https://aistudio.google.com/app/apikey) でAPIキーを取得できます。",
+    )
+
+# APIキーが最終的に設定されていない場合は、警告を表示して停止
+if not api_key:
+    st.sidebar.warning("サイドバーで有効なGemini APIキーを入力してください。")
+    st.stop()
 
 # 実行ボタン
 if st.button("要約を実行"):
